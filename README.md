@@ -6,6 +6,11 @@
 
 This repository contains agent instructions, skills, specialized agents, and Unreal Engine plugins designed for game development mainly using C++.
 
+This branch is for OpenCode users. If you use another AI agent tool, check the corresponding branch:
+
+- [Claude Code]	(https://github.com/Tractatuz/ue-agent-toolkit/tree/main-claudecode)
+- [Codex]		(https://github.com/Tractatuz/ue-agent-toolkit/tree/main-codex)
+
 ## Why ue-agent-toolkit?
 
 Unreal Engine projects are hard to work with using general AI agent workflows because of **large engine codebase**, **long compile time**, **dependency on assets** which is not text file.
