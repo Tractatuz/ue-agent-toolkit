@@ -8,8 +8,8 @@ This repository contains agent instructions, skills, specialized agents, and Unr
 
 This branch is for OpenCode users. If you use another AI agent tool, check the corresponding branch:
 
-- [Claude Code]	(https://github.com/Tractatuz/ue-agent-toolkit/tree/main-claudecode)
-- [Codex]		(https://github.com/Tractatuz/ue-agent-toolkit/tree/main-codex)
+- [Claude Code]	(https://github.com/Tractatuz/ue-agent-toolkit/tree/claudecode)
+- [Codex]		(https://github.com/Tractatuz/ue-agent-toolkit/tree/codex)
 
 ## Why ue-agent-toolkit?
 
@@ -84,20 +84,25 @@ Planned areas of development include:
 #### ue-spec		
 #### ue-plan		
 #### ue-analyze	
+Coordinates Unreal gameplay analysis across C++/config evidence and read-only asset inspection.
 #### ue-implement
+Coordinates Unreal feature implementation across C++/config changes and JsonToAsset-driven asset edits.
 #### ue-test		
 #### ue-ralph-loop
 
 ### Agents
 
-#### spec-reviewer
 #### ue-planner
 #### ue-planreviewer
 #### ue-code-reader
+Reads Unreal C++ and config evidence for delegated analysis scopes.
 #### ue-code-writer
+Implements focused Unreal Engine C++ and config changes for delegated feature scopes.
 #### ue-code-reviewer
-#### ue-asset-reader
+#### ue-asset-scanner
+Scans Unreal Blueprint and asset evidence sequentially through AssetToJson helpers.
 #### ue-asset-editor
+Adds or modifies Unreal Engine assets sequentially through JsonToAsset.
 #### ue-tester
 
 ### Unreal Engine Plugins
