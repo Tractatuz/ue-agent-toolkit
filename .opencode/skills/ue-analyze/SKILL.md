@@ -22,6 +22,13 @@ If the requested analysis scope is ambiguous, do not begin code/config/asset ins
 
 If the request is broad, lacks a stated focus/depth/goal, or cannot be answered deterministically, ask clarifying questions using the available tool.
 
+Subagent orchestration:
+
+- Use `ue-code-reader` for independent C++ and config evidence-gathering scopes. Multiple `ue-code-reader` tasks may run in parallel when they only search or read files.
+- Use `ue-asset-scanner` for Blueprint and asset evidence that requires Unreal Asset Registry, AssetToJson, or Python Remote Execution. Run `ue-asset-scanner` tasks sequentially, one asset-discovery or asset-read scope at a time.
+- Keep the helper scripts in this skill's script directory: `.opencode/skills/ue-analyze/scripts/`. When delegating asset work, pass this path explicitly to `ue-asset-scanner` along with the relevant class paths, asset paths, search roots, and whether detailed node properties are needed.
+- The primary agent remains responsible for combining subagent reports, cross-validating code/config evidence with asset evidence, and writing the final analysis. Do not forward subagent conclusions without checking how they fit the full runtime path.
+
 2. Classify what must be inspected.
 
 Identify the likely relevant source files, config files, assets, Blueprints, input mappings, animation assets, widgets, maps, data assets, and references needed to answer the user's question.
