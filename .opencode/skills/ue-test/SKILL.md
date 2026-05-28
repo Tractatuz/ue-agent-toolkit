@@ -65,7 +65,7 @@ State what was tested, command used, pass/fail result, relevant result/log paths
 Use UnrealBuildTool through the engine batch file. Adjust target, platform, configuration, project path, and engine path to the local project.
 
 ```powershell
-& "C:\EpicGames\UE_5.7\Engine\Build\BatchFiles\Build.bat" ThirdPersonEditor Win64 Development -Project="C:\Projects\Unreal\ThirdPerson\ThirdPerson.uproject" -WaitMutex -NoHotReloadFromIDE
+& "<EnginePath>\Engine\Build\BatchFiles\Build.bat" ThirdPersonEditor Win64 Development -Project="C:\Projects\Unreal\ThirdPerson\ThirdPerson.uproject" -WaitMutex -NoHotReloadFromIDE
 ```
 
 Build test guidance:
@@ -80,7 +80,7 @@ Build test guidance:
 Use Unreal's built-in Automation framework when a relevant test already exists or the implementation added one.
 
 ```powershell
-& "C:\EpicGames\UE_5.7\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "C:\Projects\Unreal\ThirdPerson\ThirdPerson.uproject" -unattended -nop4 -nosplash -nullrhi -ExecCmds="Automation RunTests <Filter>; Quit" -TestExit="Automation Test Queue Empty" -ReportOutputPath="Saved\Automation"
+& "<EnginePath>\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "C:\Projects\Unreal\ThirdPerson\ThirdPerson.uproject" -unattended -nop4 -nosplash -nullrhi -ExecCmds="Automation RunTests <Filter>; Quit" -TestExit="Automation Test Queue Empty" -ReportOutputPath="Saved\Automation"
 ```
 
 Automation guidance:
@@ -103,19 +103,19 @@ Prerequisites:
 Run TestPlay through this skill's script:
 
 ```powershell
-& ".opencode\skills\ue-test\scripts\run_testplay.ps1" -SpecFile "Saved\TestPlay\Specs\FeatureSmoke.json" -ResultJson "Saved\TestPlay\Results\FeatureSmoke.json"
+py -3 ".opencode\skills\ue-test\scripts\run_testplay.py" --spec-file "Saved\TestPlay\Specs\FeatureSmoke.json" --result-json "Saved\TestPlay\Results\FeatureSmoke.json"
 ```
 
 The script launches `UnrealEditor.exe` with `-TestPlayRun=<spec>`, `-TestPlayResult=<result>`, and `-TestPlayExitOnComplete`, then fails if the result JSON is missing or reports `success: false`.
 
 Common script options:
 
-- `-ProjectFile <path>`: explicit `.uproject`; otherwise the script finds the project above this skill directory.
-- `-EnginePath <path>`: default is `C:\EpicGames\UE_5.7`.
-- `-TimeoutSeconds <seconds>`: kill the editor if it does not exit in time.
-- `-NullRHI`: add `-nullrhi` for rendering-independent smoke tests.
-- `-NoExitOnComplete`: omit `-TestPlayExitOnComplete` for manual editor inspection.
-- `-ExtraArgs <args>`: pass additional editor arguments.
+- `--project-file <path>`: explicit `.uproject`; otherwise the script finds the project above this skill directory.
+- `--engine-path <path>`: explicit Unreal Engine root. If omitted, the script resolves the engine from the project's `EngineAssociation`, registry entries, or `OPENCODE_UNREAL_ENGINE_PATH`.
+- `--timeout-seconds <seconds>`: kill the editor if it does not exit in time.
+- `--null-rhi`: add `-nullrhi` for rendering-independent smoke tests.
+- `--no-exit-on-complete`: omit `-TestPlayExitOnComplete` for manual editor inspection.
+- `--extra-arg <arg>`: pass an additional UnrealEditor argument. Repeat for multiple arguments.
 
 Minimal TestPlay spec shape:
 

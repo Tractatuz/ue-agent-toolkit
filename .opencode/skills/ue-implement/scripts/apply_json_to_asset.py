@@ -16,6 +16,92 @@ def find_project_root(start_path):
 	raise RuntimeError(f'Could not locate an Unreal .uproject file above: {directory}')
 
 
+def find_project_file(project_root):
+	project_files = list(project_root.glob('*.uproject'))
+	if len(project_files) != 1:
+		raise RuntimeError(f'Expected exactly one .uproject under {project_root}; found {len(project_files)}')
+
+	return project_files[0]
+
+
+def is_engine_root(path):
+	return (path / 'Engine').is_dir()
+
+
+def registry_engine_candidates(engine_association):
+	if os.name != 'nt' or not engine_association:
+		return []
+
+	candidates = []
+	try:
+		import winreg
+	except ImportError:
+		return candidates
+
+	try:
+		with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'SOFTWARE\Epic Games\Unreal Engine\Builds') as key:
+			for index in range(winreg.QueryInfoKey(key)[1]):
+				name, value, _ = winreg.EnumValue(key, index)
+				if name == engine_association:
+					candidates.append(Path(value))
+	except OSError:
+		pass
+
+	for root, key_path in (
+		(winreg.HKEY_LOCAL_MACHINE, rf'SOFTWARE\EpicGames\Unreal Engine\{engine_association}'),
+		(winreg.HKEY_LOCAL_MACHINE, rf'SOFTWARE\WOW6432Node\EpicGames\Unreal Engine\{engine_association}'),
+	):
+		try:
+			with winreg.OpenKey(root, key_path) as key:
+				value, _ = winreg.QueryValueEx(key, 'InstalledDirectory')
+				candidates.append(Path(value))
+		except OSError:
+			pass
+
+	return candidates
+
+
+def resolve_engine_path(project_root, engine_path):
+	if engine_path:
+		path = Path(engine_path).expanduser().resolve()
+		if not is_engine_root(path):
+			raise RuntimeError(f'Unreal Engine root was not found or invalid: {path}')
+		return path
+
+	project_file = find_project_file(project_root)
+	with project_file.open('r', encoding='utf-8-sig') as handle:
+		project = json.load(handle)
+
+	engine_association = str(project.get('EngineAssociation') or '').strip()
+	candidates = []
+	for env_name in ('OPENCODE_UNREAL_ENGINE_PATH', 'UNREAL_ENGINE_PATH', 'UE_ENGINE_PATH'):
+		value = os.environ.get(env_name)
+		if value:
+			candidates.append(Path(value))
+
+	if engine_association:
+		association_path = Path(engine_association)
+		if association_path.is_absolute():
+			candidates.append(association_path)
+
+		candidates.extend(registry_engine_candidates(engine_association))
+		if os.name == 'nt' and not any(separator in engine_association for separator in ('/', '\\')):
+			program_files = os.environ.get('PROGRAMFILES')
+			if program_files:
+				candidates.append(Path(program_files) / 'Epic Games' / f'UE_{engine_association}')
+			candidates.append(Path('C:/EpicGames') / f'UE_{engine_association}')
+
+	for candidate in candidates:
+		path = candidate.expanduser().resolve()
+		if is_engine_root(path):
+			return path
+
+	raise RuntimeError(
+		f'Could not resolve Unreal Engine path for {project_file} '
+		f'(EngineAssociation={engine_association!r}). Pass --engine-path or set OPENCODE_UNREAL_ENGINE_PATH.'
+	)
+
+
 def resolve_project_path(project_root, value):
 	path = Path(value)
 	if not path.is_absolute():
@@ -61,7 +147,30 @@ def resolve_result_json(project_root, json_file, result_json):
 	return project_root / 'Saved' / 'JsonToAsset' / f'{safe_name}.result.json'
 
 
-def run_remote_command(engine_path, timeout_seconds, code):
+def normalize_path_for_compare(value):
+	return os.path.normcase(os.path.abspath(str(Path(value))))
+
+
+def select_project_remote_node(remote_nodes, project_root):
+	expected_project_root = normalize_path_for_compare(project_root)
+	for node in remote_nodes:
+		node_project_root = node.get('project_root')
+		if node_project_root and normalize_path_for_compare(node_project_root) == expected_project_root:
+			return node
+
+	available = [
+		{
+			'node_id': node.get('node_id'),
+			'project_name': node.get('project_name'),
+			'project_root': node.get('project_root'),
+			'engine_root': node.get('engine_root'),
+		}
+		for node in remote_nodes
+	]
+	raise RuntimeError(f'No Unreal remote execution node matched project root {project_root}. Available nodes: {available}')
+
+
+def run_remote_command(project_root, engine_path, timeout_seconds, code):
 	remote_execution_path = Path(engine_path) / 'Engine' / 'Plugins' / 'Experimental' / 'PythonScriptPlugin' / 'Content' / 'Python'
 	if not remote_execution_path.exists():
 		raise RuntimeError(f'Python remote_execution.py path was not found: {remote_execution_path}')
@@ -80,7 +189,7 @@ def run_remote_command(engine_path, timeout_seconds, code):
 		if not remote.remote_nodes:
 			raise RuntimeError('No Unreal remote execution nodes found')
 
-		node = remote.remote_nodes[0]
+		node = select_project_remote_node(remote.remote_nodes, project_root)
 		print('REMOTE_NODE', node)
 		remote.open_command_connection(node['node_id'])
 
@@ -181,7 +290,7 @@ def main():
 	parser = argparse.ArgumentParser(description='Apply a JsonToAsset Blueprint patch through Unreal Python Remote Execution.')
 	parser.add_argument('--json-file', required=True, help='JsonToAsset patch JSON file. Relative paths are resolved from the project root.')
 	parser.add_argument('--result-json', help='Result JSON path. Relative paths are resolved from the project root.')
-	parser.add_argument('--engine-path', default=r'C:\EpicGames\UE_5.7', help='Unreal Engine installation path.')
+	parser.add_argument('--engine-path', help='Unreal Engine installation path. Defaults to the project EngineAssociation.')
 	parser.add_argument('--timeout-seconds', type=int, default=10, help='Remote execution node discovery timeout.')
 	parser.add_argument('--create-missing-blueprint', action='store_true', help='Create a missing Blueprint asset before applying the patch.')
 	parser.add_argument('--parent-class', default='/Script/Engine.Actor', help='Parent class path for --create-missing-blueprint.')
@@ -194,6 +303,7 @@ def main():
 
 	os.environ['PYTHONIOENCODING'] = 'utf-8'
 	project_root = find_project_root(Path(__file__).parent)
+	engine_path = resolve_engine_path(project_root, args.engine_path)
 	json_file = resolve_project_path(project_root, args.json_file)
 	if not json_file.exists():
 		raise RuntimeError(f'Patch JSON file does not exist: {json_file}')
@@ -202,6 +312,7 @@ def main():
 	result_json = resolve_result_json(project_root, json_file, args.result_json)
 
 	print('PROJECT_ROOT', project_root)
+	print('ENGINE_PATH', engine_path)
 	print('PATCH_JSON', json_file)
 	print('TARGET_OBJECT_PATH', target_object_path)
 	print('RESULT_JSON', result_json)
@@ -213,7 +324,7 @@ def main():
 	result_json.parent.mkdir(parents=True, exist_ok=True)
 
 	code = build_editor_code(args, json_file, result_json, target_object_path)
-	run_remote_command(args.engine_path, args.timeout_seconds, code)
+	run_remote_command(project_root, engine_path, args.timeout_seconds, code)
 
 	if result_json.exists():
 		print('OUTPUT_JSON', result_json)

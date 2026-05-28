@@ -11,7 +11,7 @@ The goal is to explain runtime behavior from evidence across source code, config
 ## Prerequisites
 
 - The project must have the `AssetToJson` editor plugin enabled when asset internals need inspection.
-- The Unreal Editor must be running with Python Remote Execution available for `scripts/find_derived_blueprint_assets.py` and `scripts/read_asset_json.py`.
+- The Unreal Editor for the current project must be running with Python Remote Execution available for `scripts/find_derived_blueprint_assets.py` and `scripts/read_asset_json.py`.
 - If the plugin, editor, or remote execution is unavailable, report that asset inspection could not be performed; do not infer that assets have no relevant behavior.
 
 ## Workflow
@@ -82,7 +82,8 @@ Supported options:
 - `--direct-only`: include only Blueprints whose immediate parent class is the target class.
 - `--no-output-file`: return JSON in command output for immediate context.
 - `--output-json <path>`: save JSON to a specific path.
-- `--timeout-seconds <seconds>` and `--engine-path <path>`: remote execution configuration.
+- `--timeout-seconds <seconds>`: remote execution node discovery timeout.
+- `--engine-path <path>`: explicit Unreal Engine root. If omitted, the helper resolves the engine from the project's `EngineAssociation`, registry entries, or `OPENCODE_UNREAL_ENGINE_PATH`.
 
 The helper requires an editor instance with Python Remote Execution available. If no remote node is found, report that Blueprint discovery could not be performed; do not guess that no derived Blueprints exist.
 
@@ -127,7 +128,8 @@ Supported options:
 - `--include-node-properties`: include detailed Blueprint node properties when needed.
 - `--no-output-file`: return JSON in command output for immediate context.
 - `--output-json <path>`: save JSON to a specific output path.
-- `--timeout-seconds <seconds>` and `--engine-path <path>`: remote execution configuration.
+- `--timeout-seconds <seconds>`: remote execution node discovery timeout.
+- `--engine-path <path>`: explicit Unreal Engine root. If omitted, the helper resolves the engine from the project's `EngineAssociation`, registry entries, or `OPENCODE_UNREAL_ENGINE_PATH`.
 
 Examples:
 

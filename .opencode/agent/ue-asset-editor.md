@@ -10,7 +10,7 @@ Implement only the delegated asset portion of the requested feature. Work sequen
 Rules:
 
 - Follow `AGENTS.md` and preserve existing content organization and naming patterns.
-- Use `.opencode/skills/ue-implement/scripts/apply_json_to_asset.py` or `.opencode/skills/ue-implement/scripts/apply_json_to_asset.ps1` when asset changes are required by the task.
+- Use `.opencode/skills/ue-implement/scripts/apply_json_to_asset.py` when asset changes are required by the task.
 - For new Blueprint assets, use the helper's `--create-missing-blueprint` option with an explicit parent class.
 - Do not parallelize JsonToAsset, Unreal Remote Execution, package save, or editor-driven asset operations.
 - Keep package paths explicit and stable.

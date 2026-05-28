@@ -18,7 +18,7 @@ Do not use this skill for analysis-only questions. Use `ue-analyze` instead when
 ## Prerequisites
 
 - The project must have the `JsonToAsset` editor plugin enabled for asset patching.
-- The Unreal Editor must be running with Python Remote Execution available for `scripts/apply_json_to_asset.py`.
+- The Unreal Editor for the current project must be running with Python Remote Execution available for `scripts/apply_json_to_asset.py`.
 - JsonToAsset currently patches Blueprint assets. To add a Blueprint asset, use the helper's `--create-missing-blueprint` option to create an empty Blueprint before applying the patch.
 - If the plugin, editor, or remote execution is unavailable, report that asset editing could not be performed; do not modify `.uasset` files directly.
 
@@ -90,7 +90,7 @@ Build after C++ changes when possible. Run targeted tests or editor validation w
 
 ## Asset Implementation Rules
 
-- Use `scripts/apply_json_to_asset.py` or `scripts/apply_json_to_asset.ps1` for Blueprint asset creation or modification through JsonToAsset.
+- Use `scripts/apply_json_to_asset.py` for Blueprint asset creation or modification through JsonToAsset.
 - Do not edit `.uasset` binary content directly.
 - Keep asset package paths explicit and stable.
 - Use source-controlled asset JSON or JsonToAsset inputs when available; otherwise have `ue-asset-editor` create the smallest required JsonToAsset input.
@@ -118,13 +118,8 @@ Common options:
 - `--no-graph-changes`: patch class/component defaults only.
 - `--allow-structural-changes`: pass through JsonToAsset's structural-change opt-in. The current plugin may warn if unsupported.
 - `--validate-json-only`: validate the local JSON shape and target path without contacting Unreal.
-- `--timeout-seconds <seconds>` and `--engine-path <path>`: remote execution configuration.
-
-PowerShell wrapper example:
-
-```powershell
-& "scripts\apply_json_to_asset.ps1" -JsonFile "Saved/JsonToAsset/Patch.json" -CreateMissingBlueprint -ParentClass "/Script/Engine.Actor"
-```
+- `--timeout-seconds <seconds>`: remote execution node discovery timeout.
+- `--engine-path <path>`: explicit Unreal Engine root. If omitted, the helper resolves the engine from the project's `EngineAssociation`, registry entries, or `OPENCODE_UNREAL_ENGINE_PATH`.
 
 Minimal patch JSON shape:
 
@@ -170,7 +165,7 @@ Use a prompt like this for the single asset task:
 Implement the asset portion of <feature> using JsonToAsset in this Unreal project.
 Scope: <asset package paths and asset types>.
 Inputs: <properties, references, classes, defaults, source JSON if any>.
-Constraints: use scripts/apply_json_to_asset.py or scripts/apply_json_to_asset.ps1, one sequential asset editing flow, do not edit binary assets directly, save only required packages.
+Constraints: use scripts/apply_json_to_asset.py, one sequential asset editing flow, do not edit binary assets directly, save only required packages.
 Verification: confirm created/modified package paths, references, compile/status results, helper output, and result JSON.
 Return: assets changed, JsonToAsset patch JSON, helper command used, verification result, and any required code integration notes.
 ```
