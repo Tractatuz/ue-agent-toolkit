@@ -81,33 +81,41 @@ Planned areas of development include:
 
 ### Skills
 
-#### ue-spec		
+#### ue-spec
+- Creates or reviews Unreal Engine feature specifications before implementation planning.
 #### ue-plan		
+- Turns an Unreal Engine spec document or implementation goal prompt into a concrete, executable implementation plan.
 #### ue-analyze	
-Coordinates Unreal gameplay analysis across C++/config evidence and read-only asset inspection.
+- Coordinates Unreal gameplay analysis across C++/config evidence and read-only asset inspection.
 #### ue-implement
-Coordinates Unreal feature implementation across C++/config changes and JsonToAsset-driven asset edits.
+- Coordinates Unreal feature implementation across C++/config changes and JsonToAsset-driven asset edits.
 #### ue-test		
+- Coordinates Unreal Engine validation through build tests, Unreal Automation, and TestPlay PIE playtests.
 #### ue-ralph-loop
+- Coordinates an end-to-end autonomous Unreal development loop from spec readiness through planning, analysis, implementation, validation, self-evaluation, and reviewable handoff.
 
 ### Agents
 
-#### ue-planner
-#### ue-planreviewer
 #### ue-code-reader
-Reads Unreal C++ and config evidence for delegated analysis scopes.
+- Reads Unreal C++ and config evidence for delegated analysis scopes.
 #### ue-code-writer
-Implements focused Unreal Engine C++ and config changes for delegated feature scopes.
+- Implements focused Unreal Engine C++ and config changes for delegated feature scopes.
 #### ue-code-reviewer
+- Reviews Unreal Engine C++ structure and code changes using source inspection and LSP evidence.
 #### ue-asset-scanner
-Scans Unreal Blueprint and asset evidence sequentially through AssetToJson helpers.
+- Scans Unreal Blueprint and asset evidence sequentially through AssetToJson helpers.
 #### ue-asset-editor
-Adds or modifies Unreal Engine assets sequentially through JsonToAsset.
+- Adds or modifies Unreal Engine assets sequentially through JsonToAsset.
 #### ue-tester
+- Runs focused Unreal Engine validation through build, Automation, and TestPlay workflows.
 
 ### Unreal Engine Plugins
 
 #### AssetToJson
+- Converts Unreal assets to JSON for read-only inspection and editor automation workflows.
 #### JsonToAsset
+- Applies JSON patch data back to Unreal assets for editor automation workflows.
 #### TestPlay
+- Runs JSON-defined PIE playtests with Enhanced Input injection and gameplay/UI assertions.
 #### TaskEvidence
+- Writes standardized task evidence JSON for automation plugins.
