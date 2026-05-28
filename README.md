@@ -11,9 +11,14 @@ This branch is for OpenCode users. If you use another AI agent tool, check the c
 - [Claude Code]	(https://github.com/Tractatuz/ue-agent-toolkit/tree/claudecode)
 - [Codex]		(https://github.com/Tractatuz/ue-agent-toolkit/tree/codex)
 
+## Requirements
+
+- Python is required for the helper scripts used by the OpenCode skills.
+- To use the Unreal Engine plugins included as submodules, enable Python Remote Execution in the Unreal Editor.
+
 ## Why ue-agent-toolkit?
 
-Unreal Engine projects are hard to work with using general AI agent workflows because of **large engine codebase**, **long compile time**, **dependency on assets** which is not text file.
+Unreal Engine projects are hard to work with using general AI agent workflows because of **large engine codebase**, **long compile time**, and **dependency on non-text asset files**.
 
 So AI agents need Unreal-specific tools and workflows on development effectively.
 
@@ -64,7 +69,7 @@ flowchart TD
 
 ## Roadmap
 
-This roadmap is not fixed and may change as the project updated.
+This roadmap is not fixed and may change as the project is updated.
 
 Planned areas of development include:
 
