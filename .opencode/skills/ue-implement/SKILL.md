@@ -13,6 +13,9 @@ The goal is to decide whether the requested behavior belongs in source code, pro
 Use this skill when the user asks to add, change, or fix Unreal Engine behavior and implementation is expected.
 Typical triggers include C++ gameplay code, components, actors, pawns, controllers, widgets, animation hooks, Enhanced Input setup, data assets, Blueprint-backed defaults, JsonToAsset-generated assets, and asset edits.
 
+Do not use this skill as the first step for a very rough feature request where the behavior is not yet specified. Use the `question` tool to ask whether the user wants to create or refine a spec first.
+If the user chooses spec-first, use `ue-spec`; return to this skill only after the spec is ready for implementation.
+
 Do not use this skill for analysis-only questions. Use `ue-analyze` instead when the user asks how existing gameplay works and does not ask for implementation.
 
 ## Prerequisites
