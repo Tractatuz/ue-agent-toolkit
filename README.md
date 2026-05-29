@@ -6,6 +6,8 @@
 
 This repository contains agent instructions, skills, specialized agents, and Unreal Engine plugins designed for game development mainly using C++.
 
+It is not a standalone Unreal project; install it into your existing Unreal project.
+
 This branch is for OpenCode users. If you use another AI agent tool, check the corresponding branch:
 
 - [Claude Code]	(https://github.com/Tractatuz/ue-agent-toolkit/tree/claudecode)
@@ -13,8 +15,44 @@ This branch is for OpenCode users. If you use another AI agent tool, check the c
 
 ## Requirements
 
-- Python is required for the helper scripts used by the OpenCode skills.
+- Python is required for the helper scripts used by skills.
 - To use the Unreal Engine plugins included as submodules, enable Python Remote Execution in the Unreal Editor.
+
+## Installation
+
+Install this toolkit into an existing Unreal Engine project.
+
+1. Clone this repository with submodules.
+
+```bash
+git clone --recurse-submodules https://github.com/Tractatuz/ue-agent-toolkit.git
+```
+
+If you do not clone with `--recurse-submodules`, the plugin folders will be empty.
+
+2. Copy the cloned files into your Unreal project root.
+
+Your project should include:
+
+```text
+YourProject/
+  .opencode/
+  Plugins/
+  YourProject.uproject
+```
+
+3. Enable the included plugins in Unreal Editor.
+
+- `TaskEvidence`
+- `AssetToJson`
+- `JsonToAsset`
+- `TestPlay`
+
+4. Enable Python Remote Execution.
+
+`Edit > Project Settings > Plugins > Python > Enable Remote Execution`
+
+5. Run OpenCode from your Unreal project root. And Work!
 
 ## Why ue-agent-toolkit?
 
