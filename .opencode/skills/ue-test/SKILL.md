@@ -64,7 +64,7 @@ State what was tested, command used, pass/fail result, relevant result/log paths
 
 Use UnrealBuildTool through the engine batch file. Adjust target, platform, configuration, project path, and engine path to the local project.
 
-```powershell
+```shell
 & "<EnginePath>\Engine\Build\BatchFiles\Build.bat" ThirdPersonEditor Win64 Development -Project="C:\Projects\Unreal\ThirdPerson\ThirdPerson.uproject" -WaitMutex -NoHotReloadFromIDE
 ```
 
@@ -79,7 +79,7 @@ Build test guidance:
 
 Use Unreal's built-in Automation framework when a relevant test already exists or the implementation added one.
 
-```powershell
+```shell
 & "<EnginePath>\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "C:\Projects\Unreal\ThirdPerson\ThirdPerson.uproject" -unattended -nop4 -nosplash -nullrhi -ExecCmds="Automation RunTests <Filter>; Quit" -TestExit="Automation Test Queue Empty" -ReportOutputPath="Saved\Automation"
 ```
 
@@ -102,7 +102,7 @@ Prerequisites:
 
 Run TestPlay through this skill's script:
 
-```powershell
+```shell
 py -3 ".opencode\skills\ue-test\scripts\run_testplay.py" --spec-file "Saved\TestPlay\Specs\FeatureSmoke.json" --result-json "Saved\TestPlay\Results\FeatureSmoke.json"
 ```
 

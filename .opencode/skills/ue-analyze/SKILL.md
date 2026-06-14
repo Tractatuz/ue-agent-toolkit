@@ -71,7 +71,7 @@ Use this step when you know a C++ or Blueprint parent class but do not know whic
 
 Run the helper with the Bash tool. Set the Bash tool `workdir` to the directory that contains this `SKILL.md` unless you use an absolute script path:
 
-```powershell
+```shell
 py -3 "scripts\find_derived_blueprint_assets.py" --class-path "/Script/ThirdPerson.ThirdPersonCharacter" --no-output-file
 ```
 
@@ -118,7 +118,7 @@ Use `scripts/read_asset_json.py` only when asset internals are needed for the an
 
 Run the helper with the Bash tool. Set the Bash tool `workdir` to the directory that contains this `SKILL.md` unless you use an absolute script path:
 
-```powershell
+```shell
 py -3 "scripts\read_asset_json.py" --asset-path "/Game/<FolderPath>/<AssetName>" --no-output-file
 ```
 
@@ -133,7 +133,7 @@ Supported options:
 
 Examples:
 
-```powershell
+```shell
 py -3 "scripts\read_asset_json.py" --asset-path "/Game/<FolderPath>/<AssetName>" --no-output-file
 py -3 "scripts\read_asset_json.py" --asset-path "/Game/<FolderPath>/<AssetName>" --include-node-properties --no-output-file
 py -3 "scripts\read_asset_json.py" --asset-path "/Game/<FolderPath>/<AssetName>" --output-json "Saved/AssetToJson/<AssetName>.json"
