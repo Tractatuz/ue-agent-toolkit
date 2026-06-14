@@ -13,8 +13,8 @@ The goal is to decide whether the requested behavior belongs in source code, pro
 Use this skill when the user asks to add, change, or fix Unreal Engine behavior and implementation is expected.
 Typical triggers include C++ gameplay code, components, actors, pawns, controllers, widgets, animation hooks, Enhanced Input setup, data assets, Blueprint-backed defaults, JsonToAsset-generated assets, and asset edits.
 
-Do not use this skill as the first step for a very rough feature request where the behavior is not yet specified. Use the `question` tool to ask whether the user wants to create or refine a spec first.
-If the user chooses spec-first, use `ue-spec`; return to this skill only after the spec is ready for implementation.
+Do not use this skill as the first step for a vague or feel-driven feature request where the user-facing behavior, acceptance criteria, or implementation readiness is not clear. Use `ue-spec` first, or use the `question` tool if the user's preferred workflow is unclear.
+Return to this skill only after the spec is ready for implementation.
 
 Do not use this skill for analysis-only questions. Use `ue-analyze` instead when the user asks how existing gameplay works and does not ask for implementation.
 
@@ -106,7 +106,7 @@ Build after C++ changes when possible. Run targeted tests or editor validation w
 
 Run the helper with the Bash tool. Set the Bash tool `workdir` to the directory that contains this `SKILL.md` unless you use an absolute script path:
 
-```powershell
+```shell
 py -3 "scripts\apply_json_to_asset.py" --json-file "Saved/JsonToAsset/Patch.json"
 ```
 
