@@ -1,0 +1,36 @@
+{
+  "name": "ue-agent-toolkit",
+  "version": "0.1.0+codex.20260808003207",
+  "description": "Unreal Engine workflows for specification, planning, analysis, implementation, validation, and iterative delivery.",
+  "author": {
+    "name": "Kyungnam Kim",
+    "url": "https://github.com/Tractatuz"
+  },
+  "homepage": "https://github.com/Tractatuz/ue-agent-toolkit/tree/codex",
+  "repository": "https://github.com/Tractatuz/ue-agent-toolkit",
+  "license": "MIT",
+  "keywords": [
+    "unreal-engine",
+    "game-development",
+    "codex",
+    "automation"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "UE Agent Toolkit",
+    "shortDescription": "Build and validate Unreal Engine projects with Codex.",
+    "longDescription": "Reusable Unreal Engine workflows for feature specifications, implementation plans, C++ and asset analysis, focused implementation, testing, code review, and end-to-end iteration.",
+    "developerName": "Kyungnam Kim",
+    "category": "Productivity",
+    "capabilities": [
+      "Analysis",
+      "Write",
+      "Testing"
+    ],
+    "defaultPrompt": [
+      "Analyze how this Unreal Engine feature works.",
+      "Implement and validate this Unreal Engine change.",
+      "Run the full Unreal development loop for this feature."
+    ]
+  }
+}

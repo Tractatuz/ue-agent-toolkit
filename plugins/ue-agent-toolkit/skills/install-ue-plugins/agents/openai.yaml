@@ -1,0 +1,4 @@
+interface:
+  display_name: "Install UE Plugins"
+  short_description: "Install bundled Unreal plugins safely"
+  default_prompt: "Use $install-ue-plugins to install the bundled UnrealMCPToolsets plugin into this Unreal project."

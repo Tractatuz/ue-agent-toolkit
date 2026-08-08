@@ -1,0 +1,32 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.1.0",
+	"FriendlyName": "Unreal MCP Toolsets",
+	"Description": "Editor-only MCP toolsets for inspecting and editing Unreal Engine assets.",
+	"Category": "Editor",
+	"CreatedBy": "Kyungnam Kim",
+	"CreatedByURL": "https://github.com/Tractatuz",
+	"DocsURL": "https://github.com/Tractatuz/UnrealMCPToolsets",
+	"SupportURL": "https://github.com/Tractatuz/UnrealMCPToolsets/issues",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"Installed": false,
+	"EditorOnly": true,
+	"Plugins": [
+		{
+			"Name": "ToolsetRegistry",
+			"Enabled": true
+		}
+	],
+	"Modules": [
+		{
+			"Name": "UnrealMCPToolsets",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit",
+			"TargetAllowList": [
+				"Editor"
+			]
+		}
+	]
+}

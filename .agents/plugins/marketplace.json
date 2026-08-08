@@ -1,0 +1,20 @@
+{
+  "name": "ue-agent-toolkit",
+  "interface": {
+    "displayName": "UE Agent Toolkit"
+  },
+  "plugins": [
+    {
+      "name": "ue-agent-toolkit",
+      "source": {
+        "source": "local",
+        "path": "./plugins/ue-agent-toolkit"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

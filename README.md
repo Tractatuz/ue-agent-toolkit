@@ -6,53 +6,43 @@
 
 This repository contains agent instructions, skills, specialized agents, and Unreal Engine plugins designed for game development mainly using C++.
 
-It is not a standalone Unreal project; install it into your existing Unreal project.
+It is not a standalone Unreal project; install it as a Codex plugin and use it with your existing Unreal project.
 
-This branch is for OpenCode users. If you use another AI agent tool, check the corresponding branch:
+This branch is for Codex users. If you use another AI agent tool, check the corresponding branch:
 
-- [Claude Code](https://github.com/Tractatuz/ue-agent-toolkit/tree/claudecode)
-- [Codex](https://github.com/Tractatuz/ue-agent-toolkit/tree/codex)
+- [Claude Code](https://github.com/Tractatuz/ue-agent-toolkit/tree/claude)
+- [OpenCode](https://github.com/Tractatuz/ue-agent-toolkit/tree/opencode)
 
 ## Requirements
 
-- Python is required for the helper scripts used by skills.
-- To use the Unreal Engine plugins included as submodules, enable Python Remote Execution in the Unreal Editor.
+- Codex in the ChatGPT desktop app or Codex CLI with plugin support.
+- Python 3 is required for the helper scripts used by skills.
+- `UnrealMCPToolsets` requires Unreal Engine 5.8 and the engine `ToolsetRegistry` plugin.
+- `AssetToJson`, `JsonToAsset`, `TestPlay`, and `TaskEvidence` are separate prerequisites for the skills that use them.
+- Enable Python Remote Execution for `AssetToJson` and `JsonToAsset` workflows.
 
 ## Installation
 
-Install this toolkit into an existing Unreal Engine project.
+1. Add this repository as a Codex plugin marketplace.
 
-1. Clone this repository with submodules.
-
-```bash
-git clone --recurse-submodules https://github.com/Tractatuz/ue-agent-toolkit.git
+```powershell
+codex plugin marketplace add Tractatuz/ue-agent-toolkit --ref codex
 ```
 
-If you do not clone with `--recurse-submodules`, the plugin folders will be empty.
+2. Run `/plugins` in Codex CLI, or open Plugins in the desktop app, and install `UE Agent Toolkit`.
 
-2. Copy the cloned files into your Unreal project root.
+3. Start a new Codex task and open your Unreal project root.
 
-Your project should include:
+4. Ask Codex to install the project-local agents and bundled Unreal plugin.
 
 ```text
-YourProject/
-  .opencode/
-  Plugins/
-  YourProject.uproject
+Use $install-ue-agents to install the bundled custom agents into this Unreal project.
+Use $install-ue-plugins to install the bundled Unreal Engine plugin into this Unreal project.
 ```
 
-3. Enable the included plugins in Unreal Editor.
+5. Enable `ToolsetRegistry` and `UnrealMCPToolsets` in Unreal Editor, then rebuild the editor target.
 
-- `TaskEvidence`
-- `AssetToJson`
-- `JsonToAsset`
-- `TestPlay`
-
-4. Enable Python Remote Execution.
-
-`Edit > Project Settings > Plugins > Python > Enable Remote Execution`
-
-5. Run OpenCode from your Unreal project root and Start working!
+6. Start a new Codex task so the installed project agents are loaded.
 
 ## Why ue-agent-toolkit?
 
@@ -124,6 +114,10 @@ Planned areas of development include:
 
 ### Skills
 
+#### install-ue-agents
+- Installs the bundled Codex custom agents into an Unreal project's `.codex/agents` directory.
+#### install-ue-plugins
+- Installs the bundled Unreal Engine plugins into an Unreal project's `Plugins` directory.
 #### ue-spec
 - Creates or reviews Unreal Engine feature specifications before implementation planning.
 #### ue-plan		
@@ -152,7 +146,12 @@ Planned areas of development include:
 #### ue-tester
 - Runs focused Unreal Engine validation through build, Automation, and TestPlay workflows.
 
-### Unreal Engine Plugins
+### Bundled Unreal Engine Plugin
+
+#### UnrealMCPToolsets
+- Exposes focused asset inspection and editing operations through `ToolsetRegistry`.
+
+### External Unreal Engine Plugin Integrations
 
 #### AssetToJson
 - Converts Unreal assets to JSON for read-only inspection and editor automation workflows.

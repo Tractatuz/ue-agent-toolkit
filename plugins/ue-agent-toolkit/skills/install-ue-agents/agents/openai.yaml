@@ -1,0 +1,4 @@
+interface:
+  display_name: "Install UE Agents"
+  short_description: "Install native Unreal Codex agents"
+  default_prompt: "Use $install-ue-agents to install this plugin's native agents into the current Unreal project."
