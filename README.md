@@ -6,6 +6,8 @@
 
 This repository contains agent instructions, skills, specialized agents, and Unreal Engine plugins designed for game development mainly using C++.
 
+For supported asset inspection and editing, the toolkit uses the bundled `UnrealMCPToolsets` plugin through Unreal Engine's `ToolsetRegistry`.
+
 It is not a standalone Unreal project; install it as a Codex plugin and use it with your existing Unreal project.
 
 This branch is for Codex users. If you use another AI agent tool, check the corresponding branch:
@@ -18,8 +20,6 @@ This branch is for Codex users. If you use another AI agent tool, check the corr
 - Codex in the ChatGPT desktop app or Codex CLI with plugin support.
 - Python 3 is required for the helper scripts used by skills.
 - `UnrealMCPToolsets` requires Unreal Engine 5.8 and the engine `ToolsetRegistry` plugin.
-- `AssetToJson`, `JsonToAsset`, `TestPlay`, and `TaskEvidence` are separate prerequisites for the skills that use them.
-- Enable Python Remote Execution for `AssetToJson` and `JsonToAsset` workflows.
 
 ## Installation
 
@@ -125,9 +125,9 @@ Planned areas of development include:
 #### ue-analyze	
 - Coordinates Unreal gameplay analysis across C++/config evidence and read-only asset inspection.
 #### ue-implement
-- Coordinates Unreal feature implementation across C++/config changes and JsonToAsset-driven asset edits.
+- Coordinates Unreal feature implementation across C++/config changes and supported asset edits.
 #### ue-test		
-- Coordinates Unreal Engine validation through build tests, Unreal Automation, and TestPlay PIE playtests.
+- Coordinates Unreal Engine validation through build tests, Unreal Automation, and targeted runtime checks.
 #### ue-ralph-loop
 - Coordinates an end-to-end autonomous Unreal development loop from spec readiness through planning, analysis, implementation, validation, self-evaluation, and reviewable handoff.
 
@@ -140,24 +140,13 @@ Planned areas of development include:
 #### ue-code-reviewer
 - Reviews Unreal Engine C++ structure and code changes using source inspection and LSP evidence.
 #### ue-asset-scanner
-- Scans Unreal Blueprint and asset evidence sequentially through AssetToJson helpers.
+- Inspects Unreal Blueprint and asset evidence with focused editor tooling.
 #### ue-asset-editor
-- Adds or modifies Unreal Engine assets sequentially through JsonToAsset.
+- Adds or modifies supported Unreal Engine assets with focused editor tooling.
 #### ue-tester
-- Runs focused Unreal Engine validation through build, Automation, and TestPlay workflows.
+- Runs focused Unreal Engine validation through builds, Unreal Automation, and targeted runtime checks.
 
 ### Bundled Unreal Engine Plugin
 
 #### UnrealMCPToolsets
 - Exposes focused asset inspection and editing operations through `ToolsetRegistry`.
-
-### External Unreal Engine Plugin Integrations
-
-#### AssetToJson
-- Converts Unreal assets to JSON for read-only inspection and editor automation workflows.
-#### JsonToAsset
-- Applies JSON patch data back to Unreal assets for editor automation workflows.
-#### TestPlay
-- Runs JSON-defined PIE playtests with Enhanced Input injection and gameplay/UI assertions.
-#### TaskEvidence
-- Writes standardized task evidence JSON for automation plugins.
