@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "ue-agent-toolkit",
+  "description": "Unreal Engine agent workflows that analyze, edit, test, and collect evidence through Unreal MCP.",
+  "owner": {
+    "name": "Kyungnam Kim",
+    "url": "https://github.com/Tractatuz"
+  },
+  "plugins": [
+    {
+      "name": "ue-agent-toolkit",
+      "description": "Unreal Engine workflows for specs, planning, C++ and asset analysis, focused implementation, testing, and evidence capture through Unreal MCP.",
+      "source": "./plugins/ue-agent-toolkit",
+      "category": "productivity"
+    }
+  ]
+}

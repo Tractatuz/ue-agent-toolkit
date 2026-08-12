@@ -1,0 +1,19 @@
+{
+  "name": "ue-agent-toolkit",
+  "version": "0.1.0",
+  "description": "Unreal Engine workflows that analyze, edit, test, and collect evidence through Unreal MCP.",
+  "author": {
+    "name": "Kyungnam Kim",
+    "url": "https://github.com/Tractatuz"
+  },
+  "homepage": "https://github.com/Tractatuz/ue-agent-toolkit/tree/claude",
+  "repository": "https://github.com/Tractatuz/ue-agent-toolkit",
+  "license": "MIT",
+  "keywords": [
+    "unreal-engine",
+    "game-development",
+    "claude-code",
+    "automation"
+  ],
+  "mcpServers": "./.mcp.json"
+}
