@@ -1,9 +1,9 @@
 {
 	"FileVersion": 3,
-	"Version": 1,
-	"VersionName": "0.1.0",
+	"Version": 2,
+	"VersionName": "0.2.0",
 	"FriendlyName": "Unreal MCP Toolsets",
-	"Description": "Editor-only MCP toolsets for inspecting and editing Unreal Engine assets.",
+	"Description": "Editor-only project toolsets used through Unreal Engine's Model Context Protocol server.",
 	"Category": "Editor",
 	"CreatedBy": "Kyungnam Kim",
 	"CreatedByURL": "https://github.com/Tractatuz",
@@ -15,7 +15,19 @@
 	"EditorOnly": true,
 	"Plugins": [
 		{
+			"Name": "EnhancedInput",
+			"Enabled": true
+		},
+		{
+			"Name": "ModelContextProtocol",
+			"Enabled": true
+		},
+		{
 			"Name": "ToolsetRegistry",
+			"Enabled": true
+		},
+		{
+			"Name": "EditorToolset",
 			"Enabled": true
 		}
 	],

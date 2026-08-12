@@ -1,185 +1,98 @@
 ---
 name: ue-implement
-description: Use when implementing Unreal Engine features with C++/Config code changes or JsonToAsset asset creation/modification.
+description: Implement Unreal Engine features through focused C++ or Config changes and Unreal MCP asset creation or editing. Use when the user asks to add, change, or fix Unreal behavior.
 ---
 
-## Purpose
+# UE Implement
 
-Use this skill as the primary workflow when an agent needs to implement Unreal Engine gameplay, UI, input, animation, data, or content-facing features.
-The goal is to decide whether the requested behavior belongs in source code, project config, Unreal assets, or a combination, then coordinate focused implementation agents safely.
+Choose the correct Unreal implementation surface, make the smallest correct change, and verify code/asset integration. Prefer C++ or config when feasible; use Unreal MCP when authored assets must change.
 
-## Trigger Conditions
+## Required Reference
 
-Use this skill when the user asks to add, change, or fix Unreal Engine behavior and implementation is expected.
-Typical triggers include C++ gameplay code, components, actors, pawns, controllers, widgets, animation hooks, Enhanced Input setup, data assets, Blueprint-backed defaults, JsonToAsset-generated assets, and asset edits.
+Before any Unreal MCP call, read `../../UNREAL_MCP.md` completely and follow its connection, discovery, editing, safety, and evidence contract.
 
-Do not use this skill as the first step for a vague or feel-driven feature request where the user-facing behavior, acceptance criteria, or implementation readiness is not clear. Use `ue-spec` first, or use the `question` tool if the user's preferred workflow is unclear.
-Return to this skill only after the spec is ready for implementation.
+## Routing
 
-Do not use this skill for analysis-only questions. Use `ue-analyze` instead when the user asks how existing gameplay works and does not ask for implementation.
+- Use this skill for implementation requests with sufficiently clear behavior and acceptance criteria.
+- Use `ue-spec` first when the observable result or major constraints are ambiguous.
+- Use `ue-plan` first when the user asks for a reviewable task plan before coding.
+- Use `ue-analyze` for analysis-only questions.
+- Use `ue-test` after implementation when validation is requested or appropriate.
 
-## Prerequisites
+## Prerequisites For Asset Work
 
-- The project must have the `JsonToAsset` editor plugin enabled for asset patching.
-- The Unreal Editor for the current project must be running with Python Remote Execution available for `scripts/apply_json_to_asset.py`.
-- JsonToAsset currently patches Blueprint assets. To add a Blueprint asset, use the helper's `--create-missing-blueprint` option to create an empty Blueprint before applying the patch.
-- If the plugin, editor, or remote execution is unavailable, report that asset editing could not be performed; do not modify `.uasset` files directly.
+- The project must be open in Unreal Editor with the local Unreal MCP server started.
+- Required engine/project toolsets must appear in `list_toolsets`.
+- Existing assets must pass `AssetTools.can_edit_asset` before mutation.
+- If the server, toolset, source-control permission, or editor state is unavailable, stop the asset portion and report the blocker. Never edit `.uasset` bytes directly.
 
 ## Core Decision
 
-First classify the requested implementation surface:
-
-- Prefer C++ or config when the change is runtime logic, networking authority, replication, component composition, input binding code, validation, persistence, or broadly reusable behavior.
-- Prefer assets when the change is primarily authored data, visual structure, Blueprint graph/default changes, widgets/layouts, animation assets, input mapping assets, data tables, data assets, maps, or content references.
-- Use both when code needs reflected extension points, properties, or classes, and assets must provide defaults, references, or authored content.
-- Ask one short clarifying question if choosing code versus asset would change the user-visible result and the request does not provide enough information.
-
-When in doubt, keep the smallest correct implementation in code and avoid binary asset edits unless the feature clearly requires assets.
-
-## Delegated Roles
-
-When multi-agent tools are available and delegation is appropriate, create focused subagent tasks with the matching installed custom agent:
-
-- `ue-code-writer`: implement C++ and config changes. Launch multiple instances in parallel only when their file scopes are independent.
-- `ue-asset-editor`: implement asset additions or modifications through JsonToAsset. Launch exactly one instance and run asset work sequentially.
-
-If multi-agent tools are unavailable, the custom agents are not installed, or policy does not allow delegation, perform the same scoped work in the primary session while following the corresponding rules in this skill.
+- Prefer C++ or config for runtime logic, authority, replication, reusable behavior, persistence, component composition, input binding code, and validation.
+- Prefer assets for authored defaults, Blueprint graphs, Widget Blueprint layout, animation state, input/data assets, tables, materials, maps, and content references.
+- Use a hybrid when code supplies reflected extension points and assets supply authored structure/defaults.
+- If either surface would produce a materially different user-visible result and the request does not decide, ask one focused question.
 
 ## Workflow
 
-1. Understand the request.
+1. **Understand the request.** Identify observable behavior, target systems, networking/persistence constraints, asset impact, and verification criteria.
+2. **Inspect existing patterns.** Read nearby C++, config, and relevant asset state. Do not assume stock Unreal architecture.
+3. **Declare the surface.** State code-only, config-only, asset-only, or hybrid, and call out why binary assets are necessary.
+4. **Implement code/config.** Follow `AGENTS.md`, preserve reflected API compatibility, networking intent, ownership/lifetime, and existing style.
+5. **Discover MCP schemas.** For asset work, call `list_toolsets` and `describe_toolset` for each required toolset before mutation.
+6. **Edit assets sequentially.** Read current state, apply the smallest type-specific change, compile where supported, and read back the result.
+7. **Save explicitly.** Save only named packages with `AssetTools.save_assets` after verification, then confirm each package is no longer dirty.
+8. **Integrate and review.** Inspect diffs and ensure reflected symbols, paths, references, defaults, and asset state agree.
+9. **Verify.** Build C++ changes when possible and route runtime/Automation validation to `ue-test`.
 
-Identify the feature, expected runtime behavior, target classes/assets, networking requirements, editor/runtime constraints, and verification path.
+## Unreal MCP Editing
 
-2. Inspect existing patterns.
+Use focused toolsets rather than a generic patch format:
 
-Read nearby C++ headers and implementation files, module files, relevant `Config/*.ini`, and existing assets or asset JSON when they affect the implementation. Do not assume project architecture from Unreal defaults.
+- `AssetTools`: discovery, `can_edit_asset`, create/duplicate operations where exposed, explicit save, and dirty/source-control checks.
+- `BlueprintTools`: create Blueprint assets, edit variables/functions/events/nodes, use `write_graph_dsl` for graph changes, compile, and read back graph DSL.
+- `ObjectTools`: list/get exact properties before narrow `set_properties` calls on CDOs, components, and data assets.
+- `ActorTools` and `SceneTools`: editor-world actor/component work only when maps or level-authored content are explicitly in scope.
+- `UMGToolSet`: Widget Blueprint creation, tree edits, event binding, and compile.
+- Specialized data, table, material, mesh, texture, animation, gameplay, or bundled toolsets for their own asset domains.
+- `ProgrammaticToolset`: only for a genuinely atomic multi-tool edit that focused calls cannot express. Inspect its schema, preserve rollback, and commit only after all checks succeed.
 
-3. Decide code, asset, or hybrid.
+Never guess a tool name or argument. Match toolsets by final class name and use the exact module-qualified name returned by discovery.
 
-Record the decision briefly before delegating. Include why asset changes are necessary if any `.uasset` or JsonToAsset operation will be used.
+### Asset Transaction Checklist
 
-4. Split code work for parallel implementation.
+For every changed package:
 
-When code changes are needed, create focused tasks assigned to the `ue-code-writer` custom agent, with non-overlapping responsibilities such as one class or component per task, or one subsystem plus its tests or config. Give each task exact files or search targets, expected behavior, constraints, and verification commands.
+1. Record the exact package path and intended change.
+2. Confirm edit permission for an existing asset.
+3. Capture the relevant before-state.
+4. Apply focused MCP calls sequentially.
+5. Compile or validate the asset type.
+6. Re-read the changed structure/properties/references.
+7. Save the explicit package path.
+8. Confirm clean dirty state and report the result.
 
-Do not ask two `ue-code-writer` subagents to edit the same file unless the sequence is explicitly controlled by the primary agent.
+If an operation partially fails, do not save. Use Unreal undo/transaction rollback when available and report any dirty in-memory packages that remain.
 
-5. Run asset work sequentially.
+## Delegated Roles
 
-When asset creation or modification is needed, create one task assigned to the `ue-asset-editor` custom agent. Provide the intended package paths, asset types, references, properties, and any source code symbols that the asset must bind to.
+When the user or active policy permits delegation:
 
-Do not parallelize JsonToAsset work, Unreal Remote Execution work, package saves, or editor-driven asset operations.
+- `ue-code-writer`: focused C++/config work with non-overlapping file ownership.
+- `ue-asset-editor`: exactly one sequential Unreal MCP asset-editing flow.
+- `ue-code-reviewer`: independent review of non-trivial C++/config changes.
 
-6. Integrate results.
+Do not assign two writers to the same file or run concurrent mutating calls against one Unreal Editor session. The primary agent owns integration and final verification.
 
-Review every agent result, inspect diffs, resolve conflicts manually, and ensure code and assets reference each other correctly. Do not assume a subagent's final message is sufficient verification.
+## Code Rules
 
-7. Verify.
+- Follow `AGENTS.md` and existing naming, pointer, module, and reflection style.
+- Avoid gameplay logic in constructors beyond default subobjects/default values.
+- Preserve RPC, authority, replication, GC, serialization, and lifecycle intent.
+- Avoid Tick unless necessary; prefer events, delegates, timers, components, and subsystems.
+- Treat `.uproject`, `.uplugin`, `.Build.cs`, and `Config/*.ini` as high-impact.
+- Never edit generated output under `Binaries/`, `Intermediate/`, `Saved/`, or `DerivedDataCache/`.
 
-Build after C++ changes when possible. Run targeted tests or editor validation when available. For asset work, verify JsonToAsset output, asset paths, references, compile status, and package save status.
+## Response
 
-For non-trivial C++ or config changes, use the independent `ue-code-reviewer` custom agent when multi-agent tools and policy allow it. Resolve actionable findings before final handoff.
-
-## Code Implementation Rules
-
-- Follow `AGENTS.md` and existing Unreal project style.
-- Prefer minimal C++ changes over Blueprint or binary asset edits when feasible.
-- Preserve reflected API compatibility unless the user explicitly approves renames/removals.
-- Avoid gameplay logic in constructors beyond default subobject creation and default values.
-- Preserve networking authority, RPC, and replication intent.
-- Avoid adding Tick unless there is a clear need.
-- Prefer events, delegates, timers, components, subsystems, or data-driven configuration.
-- Treat `.uproject`, `.uplugin`, `.Build.cs`, and `Config/*.ini` edits as high-impact and call them out.
-- Do not edit generated output under `Binaries/`, `Intermediate/`, `Saved/`, or `DerivedDataCache/`.
-
-## Asset Implementation Rules
-
-- Use `scripts/apply_json_to_asset.py` for Blueprint asset creation or modification through JsonToAsset.
-- Do not edit `.uasset` binary content directly.
-- Keep asset package paths explicit and stable.
-- Use source-controlled asset JSON or JsonToAsset inputs when available; otherwise have a `ue-asset-editor` subagent create the smallest required JsonToAsset input.
-- Save or resave only the packages needed for the requested feature.
-- Do not run destructive editor commands.
-- If the editor, JsonToAsset plugin, or required remote execution path is unavailable, stop asset editing and report the blocker.
-- Call out every created or modified asset path in the final response.
-
-## JsonToAsset Helper
-
-Run the helper with the Bash tool. Set the Bash tool `workdir` to the directory that contains this `SKILL.md` unless you use an absolute script path:
-
-```shell
-py -3 "scripts\apply_json_to_asset.py" --json-file "Saved/JsonToAsset/Patch.json"
-```
-
-Common options:
-
-- `--json-file <path>`: JsonToAsset patch JSON file. Relative paths are resolved from the project root.
-- `--result-json <path>`: result JSON path. Defaults to `Saved/JsonToAsset/<patch-name>.result.json`.
-- `--create-missing-blueprint`: create the target Blueprint if it does not exist before applying the patch.
-- `--parent-class <path>`: parent class for `--create-missing-blueprint`, default `/Script/Engine.Actor`.
-- `--no-save`: apply without saving the asset package.
-- `--no-compile`: apply without compiling the Blueprint.
-- `--no-graph-changes`: patch class/component defaults only.
-- `--allow-structural-changes`: pass through JsonToAsset's structural-change opt-in. The current plugin may warn if unsupported.
-- `--validate-json-only`: validate the local JSON shape and target path without contacting Unreal.
-- `--timeout-seconds <seconds>`: remote execution node discovery timeout.
-- `--engine-path <path>`: explicit Unreal Engine root. If omitted, the helper resolves the engine from the project's `EngineAssociation`, registry entries, or `CODEX_UNREAL_ENGINE_PATH`.
-
-Minimal patch JSON shape:
-
-```json
-{
-  "schema": "ue.json_to_asset.patch.v1",
-  "asset": {
-    "path": "/Game/Blueprints/BP_Example"
-  },
-  "class_defaults": {
-    "properties": [
-      { "name": "SomeProperty", "value": "42" }
-    ]
-  }
-}
-```
-
-Patch fields supported by the current plugin include:
-
-- `asset.path` or `asset.object_path`: target Blueprint package or object path.
-- `class_defaults.properties[]`: CDO property imports using Unreal text export values.
-- `components[]`: existing SCS component defaults, matched by `variable_name` or `component_template`.
-- `graphs[]`: existing graph node comments, positions, pin defaults, and rebuilt links.
-
-The helper is sequential by design. Do not run multiple instances in parallel, and do not parallelize it with other Unreal Remote Execution commands.
-
-## Delegation Templates
-
-Use a prompt like this for each parallel code task:
-
-```text
-Implement the code portion of <feature> in this Unreal project.
-Scope: <specific classes/files or search targets>.
-Expected behavior: <runtime behavior>.
-Constraints: follow AGENTS.md, preserve reflected API compatibility, avoid asset edits, do not touch unrelated files.
-Verification: <build/test command if known>.
-Return: files changed, behavior implemented, verification result, and any integration notes.
-```
-
-Use a prompt like this for the single asset task:
-
-```text
-Implement the asset portion of <feature> using JsonToAsset in this Unreal project.
-Scope: <asset package paths and asset types>.
-Inputs: <properties, references, classes, defaults, source JSON if any>.
-Constraints: use scripts/apply_json_to_asset.py, one sequential asset editing flow, do not edit binary assets directly, save only required packages.
-Verification: confirm created/modified package paths, references, compile/status results, helper output, and result JSON.
-Return: assets changed, JsonToAsset patch JSON, helper command used, verification result, and any required code integration notes.
-```
-
-## Response Style
-
-- Answer in Korean unless the user asks otherwise.
-- State the implementation surface selected: code, asset, or hybrid.
-- Mention whether parallel `ue-code-writer` subagents, the sequential `ue-asset-editor` subagent, or an independent `ue-code-reviewer` subagent were used.
-- Summarize changed files and asset paths.
-- Report build/test/editor verification, or explain why verification was skipped.
-- Explicitly call out binary asset, broad config, plugin, or module changes.
+Answer in the user's language. Lead with the implemented outcome and selected surface. List changed source/config files and exact asset package paths. For asset work, include resolved toolsets, important MCP calls, compile/read-back/save results, and any dirty or blocked packages. Report builds/tests run and residual untested risks without overstating proof.

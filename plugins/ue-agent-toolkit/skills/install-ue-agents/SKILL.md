@@ -5,7 +5,7 @@ description: Install or update the UE Agent Toolkit native Codex custom-agent TO
 
 # Install UE Agents
 
-Install the six native Codex custom agents bundled with this plugin into the target Unreal project. Treat existing agent files as user-owned configuration and never overwrite a conflict without explicit approval.
+Install the six native Codex custom agents bundled with this plugin into the target Unreal project. The bundled asset scanner, asset editor, and tester use the plugin-provided Unreal MCP connection; the code agents preserve clean handoffs to those MCP roles. Treat existing agent files as user-owned configuration and never overwrite a conflict without explicit approval.
 
 ## Workflow
 
@@ -49,3 +49,5 @@ Confirm that these files exist under `<unreal-project-root>/.codex/agents/`:
 - `ue-tester.toml`
 
 Report installed, unchanged, and replaced files separately. Tell the user to start a new Codex task so the newly installed custom agents are loaded.
+
+Also state that editor-driven agents require the `ue-agent-toolkit` Codex plugin to remain installed and the Unreal MCP server to be running before the new task starts. Do not copy MCP credentials or server configuration into individual agent TOML files.

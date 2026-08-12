@@ -6,7 +6,7 @@
 
 This repository contains agent instructions, skills, specialized agents, and Unreal Engine plugins designed for game development mainly using C++.
 
-For supported asset inspection and editing, the toolkit uses the bundled `UnrealMCPToolsets` plugin through Unreal Engine's `ToolsetRegistry`.
+For asset inspection/editing, PIE control, Automation, logs, captures, and structured evidence, the toolkit connects directly to Unreal Engine's local MCP server. The bundled `UnrealMCPToolsets` plugin enables the required engine toolset stack and adds project-specific toolsets.
 
 It is not a standalone Unreal project; install it as a Codex plugin and use it with your existing Unreal project.
 
@@ -18,8 +18,8 @@ This branch is for Codex users. If you use another AI agent tool, check the corr
 ## Requirements
 
 - Codex in the ChatGPT desktop app or Codex CLI with plugin support.
-- Python 3 is required for the helper scripts used by skills.
-- `UnrealMCPToolsets` requires Unreal Engine 5.8 and the engine `ToolsetRegistry` plugin.
+- Python 3 is required for the installer and Ralph Loop helper scripts.
+- `UnrealMCPToolsets` requires Unreal Engine 5.8 and its experimental Unreal MCP/toolset plugins.
 
 ## Installation
 
@@ -40,9 +40,11 @@ Use $install-ue-agents to install the bundled custom agents into this Unreal pro
 Use $install-ue-plugins to install the bundled Unreal Engine plugin into this Unreal project.
 ```
 
-5. Enable `ToolsetRegistry` and `UnrealMCPToolsets` in Unreal Editor, then rebuild the editor target.
+5. Enable `UnrealMCPToolsets` in Unreal Editor. It enables the core `EnhancedInput`, `ModelContextProtocol`, `ToolsetRegistry`, and `EditorToolset` dependencies. Review and explicitly enable `PythonScriptPlugin` for Python-based EditorToolset operations, plus optional `AutomationTestToolset`, `SlateInspectorToolset`, and `UMGToolSet` only for workflows that need them. Then rebuild the editor target and any optional Toolset whose binaries do not match the current editor.
 
-6. Start a new Codex task so the installed project agents are loaded.
+6. Start the Unreal MCP server from the engine setting or launch the editor with `-ModelContextProtocolStartServer`. The toolkit connects to `http://127.0.0.1:8000/mcp` by default.
+
+7. Start a new Codex task so the plugin MCP connection and installed project agents are loaded. The agents discover live schemas with `list_toolsets` and `describe_toolset` before calling tools.
 
 ## Why ue-agent-toolkit?
 
@@ -123,11 +125,11 @@ Planned areas of development include:
 #### ue-plan		
 - Turns an Unreal Engine spec document or implementation goal prompt into a concrete, executable implementation plan.
 #### ue-analyze	
-- Coordinates Unreal gameplay analysis across C++/config evidence and read-only asset inspection.
+- Coordinates Unreal gameplay analysis across C++/config evidence and read-only Unreal MCP asset inspection.
 #### ue-implement
-- Coordinates Unreal feature implementation across C++/config changes and supported asset edits.
+- Coordinates Unreal feature implementation across C++/config changes and focused Unreal MCP asset edits.
 #### ue-test		
-- Coordinates Unreal Engine validation through build tests, Unreal Automation, and targeted runtime checks.
+- Coordinates build tests, Unreal MCP Automation/PIE checks, logs/captures, and structured evidence packets.
 #### ue-ralph-loop
 - Coordinates an end-to-end autonomous Unreal development loop from spec readiness through planning, analysis, implementation, validation, self-evaluation, and reviewable handoff.
 
@@ -149,4 +151,11 @@ Planned areas of development include:
 ### Bundled Unreal Engine Plugin
 
 #### UnrealMCPToolsets
-- Exposes focused asset inspection and editing operations through `ToolsetRegistry`.
+- Enables the engine Unreal MCP toolset stack and adds focused project-specific toolsets.
+
+### Migrated Runtime Paths
+
+- Asset inspection formerly handled by AssetToJson now uses `AssetTools`, `ObjectTools`, `BlueprintTools`, `UMGToolSet`, and specialized MCP toolsets.
+- Asset editing formerly handled by JsonToAsset now uses focused type-specific MCP calls with compile, read-back, explicit save, and dirty-state verification.
+- Runtime checks formerly handled by TestPlay now use bounded MCP-controlled PIE, the bundled `PlaytestToolset` for Enhanced Input injection, and Automation where appropriate.
+- Evidence formerly handled by TaskEvidence now uses `ue.mcp.evidence.v1` packets under `Saved/Agent/Evidence/`, written through Unreal MCP.

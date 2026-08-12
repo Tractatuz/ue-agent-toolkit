@@ -5,9 +5,9 @@ import uuid
 import unreal
 
 
-TOOLSET_CLASS = unreal.AnimBlueprintToolset
-TOOLSET_NAME = "UnrealMCPToolsets.AnimBlueprintToolset"
-EXPECTED_TOOLS = {
+ANIM_TOOLSET_CLASS = unreal.AnimBlueprintToolset
+ANIM_TOOLSET_NAME = "UnrealMCPToolsets.AnimBlueprintToolset"
+EXPECTED_ANIM_TOOLS = {
     "CreateState",
     "CreateTransition",
     "DeleteState",
@@ -15,6 +15,16 @@ EXPECTED_TOOLS = {
     "GetStateMachine",
     "ListStateMachines",
     "SetTransitionSettings",
+}
+PLAYTEST_TOOLSET_CLASS = unreal.PlaytestToolset
+PLAYTEST_TOOLSET_NAME = "UnrealMCPToolsets.PlaytestToolset"
+EXPECTED_PLAYTEST_TOOLS = {
+    "InjectInputAction",
+    "InjectInputActionForDuration",
+    "IsInputActionInjected",
+    "StartInputAction",
+    "StopInputAction",
+    "UpdateInputAction",
 }
 DEFAULT_TEST_ASSETS = (
     "/Game/Variant_Platforming/Anims/ABP_Manny_Platforming",
@@ -30,7 +40,7 @@ def _asset_reference(asset):
 
 def _execute(tool_name, arguments, expected_error=None):
     result = unreal.ToolsetRegistry.execute_tool(
-        TOOLSET_NAME,
+        ANIM_TOOLSET_NAME,
         tool_name,
         json.dumps(arguments),
     )
@@ -76,16 +86,35 @@ def _transition_settings(crossfade_duration=0.2, priority_order=1):
 
 def main():
     assert unreal.ToolsetRegistry.is_available(), "ToolsetRegistry is unavailable"
-    assert unreal.ToolsetRegistry.is_toolset_class_registered(TOOLSET_CLASS), (
-        f"{TOOLSET_NAME} is not registered"
+    assert unreal.ToolsetRegistry.is_toolset_class_registered(ANIM_TOOLSET_CLASS), (
+        f"{ANIM_TOOLSET_NAME} is not registered"
+    )
+    assert unreal.ToolsetRegistry.is_toolset_class_registered(PLAYTEST_TOOLSET_CLASS), (
+        f"{PLAYTEST_TOOLSET_NAME} is not registered"
     )
 
-    schema = json.loads(unreal.ToolsetRegistry.get_toolset_json_schema(TOOLSET_CLASS))
-    assert schema["name"] == TOOLSET_NAME
-    assert schema["version"] == "0.1.0"
-    exposed_tools = {entry["name"].rsplit(".", 1)[-1] for entry in schema["tools"]}
-    assert exposed_tools == EXPECTED_TOOLS, (
-        f"Unexpected tool schema: {sorted(exposed_tools)}"
+    anim_schema = json.loads(
+        unreal.ToolsetRegistry.get_toolset_json_schema(ANIM_TOOLSET_CLASS)
+    )
+    assert anim_schema["name"] == ANIM_TOOLSET_NAME
+    assert anim_schema["version"] == "0.1.0"
+    exposed_anim_tools = {
+        entry["name"].rsplit(".", 1)[-1] for entry in anim_schema["tools"]
+    }
+    assert exposed_anim_tools == EXPECTED_ANIM_TOOLS, (
+        f"Unexpected Animation Blueprint tool schema: {sorted(exposed_anim_tools)}"
+    )
+
+    playtest_schema = json.loads(
+        unreal.ToolsetRegistry.get_toolset_json_schema(PLAYTEST_TOOLSET_CLASS)
+    )
+    assert playtest_schema["name"] == PLAYTEST_TOOLSET_NAME
+    assert playtest_schema["version"] == "0.1.0"
+    exposed_playtest_tools = {
+        entry["name"].rsplit(".", 1)[-1] for entry in playtest_schema["tools"]
+    }
+    assert exposed_playtest_tools == EXPECTED_PLAYTEST_TOOLS, (
+        f"Unexpected playtest tool schema: {sorted(exposed_playtest_tools)}"
     )
 
     source_asset_path = _find_test_asset()
@@ -263,7 +292,7 @@ def main():
     print(
         "UNREAL_MCP_TOOLSETS_SMOKE_TEST=PASS "
         f"asset={source_asset_path} state_machine={state_machine_name} "
-        f"tools={len(EXPECTED_TOOLS)}"
+        f"tools={len(EXPECTED_ANIM_TOOLS) + len(EXPECTED_PLAYTEST_TOOLS)}"
     )
 
 

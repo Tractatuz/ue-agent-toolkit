@@ -1,178 +1,86 @@
 ---
 name: ue-analyze
-description: Use when analyzing Unreal Engine gameplay behavior across C++, Config, Blueprint, and asset data.
+description: Analyze Unreal Engine gameplay behavior across C++, Config, Blueprint, and asset data, using Unreal MCP for editor and asset evidence. Use for analysis-only questions about how an Unreal project currently works.
 ---
 
-## Purpose
+# UE Analyze
 
-Use this skill as the primary workflow when an agent needs to analyze all or part of an Unreal Engine project.
-The goal is to explain runtime behavior from evidence across source code, config, Blueprint graphs, component defaults, CDO values, input assets, animation/UI assets, content references and so on.
+Explain current Unreal behavior from cross-validated source, config, Blueprint, asset, and editor evidence. Do not edit project state.
+
+## Required Reference
+
+Before any Unreal MCP call, read `../../UNREAL_MCP.md` completely and follow its connection, discovery, inspection, safety, and reporting contract.
 
 ## Prerequisites
 
-- The project must have the `AssetToJson` editor plugin enabled when asset internals need inspection.
-- The Unreal Editor for the current project must be running with Python Remote Execution available for `scripts/find_derived_blueprint_assets.py` and `scripts/read_asset_json.py`.
-- If the plugin, editor, or remote execution is unavailable, report that asset inspection could not be performed; do not infer that assets have no relevant behavior.
+- The target `.uproject` and intended analysis scope must be known.
+- C++ and config analysis can proceed without the editor.
+- Asset or live editor conclusions require the project to be open in Unreal Editor, the local Unreal MCP server to be started, and the relevant toolsets to be present.
+- If MCP is unavailable, report the exact missing evidence. Never infer that an asset contains no behavior merely because it could not be inspected.
 
 ## Workflow
 
-1. Clarify Scope First
+1. **Resolve scope.** Identify the user question, target feature, expected depth, and likely code/config/asset surfaces. Ask only when different scopes would produce materially different answers.
+2. **Read source and config.** Inspect relevant headers, implementations, module files, target files, and `Config/*.ini`. Trace ownership, inheritance, lifecycle, delegates, timers, input, networking, replication, and Blueprint-facing hooks.
+3. **Identify asset-owned decisions.** Treat Blueprint-editable properties, asset references, generated classes, widgets, animation classes, input assets, maps, data assets, and component defaults as required asset evidence when they affect the answer.
+4. **Discover Unreal MCP tools.** Call `list_toolsets`, match required suffixes, and call `describe_toolset` before the first use of each toolset. Use the exact returned schemas with `call_tool`.
+5. **Inspect only relevant assets.** Read the smallest set of packages that can confirm or reject the runtime hypothesis.
+6. **Cross-validate.** Connect native control flow, config values, Blueprint graphs, CDO/default values, components, asset references, and observed editor state into one runtime explanation.
+7. **Report confidence.** Separate confirmed source facts, MCP-observed asset/editor facts, inferences, inaccessible evidence, and untested runtime behavior.
 
-If the requested analysis scope is ambiguous, do not begin code/config/asset inspection immediately. Ask the user's intent first.
+## MCP Asset Inspection
 
-If the request is broad, lacks a stated focus/depth/goal, or cannot be answered deterministically, ask clarifying questions using the available tool.
+Use tool-native structured results:
 
-Subagent orchestration:
+- `AssetTools`: `find_assets`, `get_asset_tags`, `get_asset_class`, `get_dependencies`, `get_referencers`, and `load_asset` when an object reference is required.
+- `ObjectTools`: `search_subclasses`, `list_properties`, and narrow `get_properties` reads.
+- `BlueprintTools`: parent class, graph/function/event lists, variables, nodes, connected subgraphs, and `read_graph_dsl`.
+- `ActorTools` and `SceneTools`: current map and actor/component state when live or PIE state is explicitly in scope.
+- `UMGToolSet`: Widget Blueprint hierarchy and structure.
+- `AnimBlueprintToolset` or other specialized toolsets: asset-type-specific state unavailable from generic tools.
+- `LogsToolset`: scoped editor/runtime log evidence.
 
-- When multi-agent tools are available and delegation is appropriate, create focused subagent tasks with the matching installed custom agent.
-- Use the `ue-code-reader` custom agent for independent C++ and config evidence-gathering scopes. Multiple code-reading tasks may run in parallel when they only search or read files.
-- Use the `ue-asset-scanner` custom agent for Blueprint and asset evidence that requires Unreal Asset Registry, AssetToJson, or Python Remote Execution. Run asset-scanning tasks sequentially, one asset-discovery or asset-read scope at a time.
-- Resolve helper scripts from the `scripts/` directory beside this `SKILL.md`. When delegating asset work, pass its absolute path along with the relevant class paths, asset paths, search roots, and whether detailed node properties are needed.
-- The primary agent remains responsible for combining subagent reports, cross-validating code/config evidence with asset evidence, and writing the final analysis. Do not forward subagent conclusions without checking how they fit the full runtime path.
+Toolset names are module-qualified and may vary. Match by final class name and use the exact name returned by `list_toolsets`; do not hardcode a prefix.
 
-2. Classify what must be inspected.
+### Derived Blueprint Discovery
 
-Identify the likely relevant source files, config files, assets, Blueprints, input mappings, animation assets, widgets, maps, data assets, and references needed to answer the user's question.
+When starting from a native or Blueprint parent class:
 
-3. Read source and config evidence.
+1. Use `ObjectTools.search_subclasses` with the parent class and an optional class-name filter.
+2. Use `AssetTools.find_assets` under focused content roots.
+3. Correlate generated-class and parent-class tags to the discovered class paths.
+4. Prioritize packages referenced by maps, GameMode defaults, nearby feature folders, input/animation/widget properties, dependencies, and referencers.
+5. Inspect selected Blueprints with `BlueprintTools` and `ObjectTools`.
 
-Search and read relevant C++ headers, C++ implementation files, `.Build.cs`, target files, and `Config/*.ini`. Use source code to identify class ownership, inheritance, Blueprint hooks, reflected properties, input bindings, delegates, components, constructors, lifecycle functions, and runtime control flow.
+Include indirect descendants unless the user explicitly asks for direct children only.
 
-If a relevant `UPROPERTY` can be edited or overridden by Blueprint defaults (`EditDefaultsOnly`, `EditAnywhere`, `EditInstanceOnly`, `ExposeOnSpawn`, instanced subobjects, or asset-assigned defaults), classify the owning Blueprint asset as required evidence and read it before finalizing the analysis.
+### Blueprint Interpretation
 
-4. Inspect assets when asset data affects the answer.
+- Follow linked execution pins before data pins.
+- Identify events, function entries, construction scripts, delegates, timelines, latent nodes, branches, calls, and variable reads/writes.
+- Use `read_graph_dsl` for a compact graph view; use node and connected-subgraph tools for focused detail.
+- Read Blueprint CDO and component properties only when they affect the question.
+- Explain runtime behavior instead of returning a node inventory.
 
-Locate related assets from C++ properties, config paths, soft object references, input mapping contexts, animation classes, widgets, Blueprint class references, maps, naming patterns, or asset registry relationships.
+## Delegated Roles
 
-When source analysis starts from a C++ class and Blueprint subclasses may override defaults, components, graphs, animation classes, widgets, events, or exposed properties, first discover derived Blueprint assets with `scripts/find_derived_blueprint_assets.py`. Use the discovered assets to decide which specific Blueprints must be inspected with `scripts/read_asset_json.py`.
+When the user or active policy permits delegation:
 
-When binary asset data must be read, use `scripts/read_asset_json.py`, such as for Blueprint graphs, Blueprint variables, component defaults, CDO values, timelines, Enhanced Input assets, widget structure, animation data, or asset metadata. Do not treat `.uasset` binary files as directly readable source.
+- Use `ue-code-reader` for independent source/config scopes.
+- Use `ue-asset-scanner` for read-only Unreal MCP asset scopes.
+- Parallelize independent filesystem reads if useful, but serialize editor-driven MCP work against the same Unreal session.
+- The primary agent must integrate and cross-check all reports.
 
-5. Cross-validate the evidence.
-
-Connect C++ implementation, config values, Blueprint graph execution, component defaults, CDO/default values, and asset references into one runtime explanation. Prefer explaining behavior over listing files or nodes.
-
-6. Report confidence and limits.
-
-State what evidence was used, what was cross-validated, and what could not be inspected. Distinguish confirmed behavior from inference.
-
-## C++ And Config Analysis
-
-- Read the local class hierarchy first, especially base character, pawn, controller, component, ability, animation, UI, and feature-specific classes.
-- Inspect `UPROPERTY` and `UFUNCTION` metadata to understand Blueprint-facing extension points and defaults.
-- When a relevant `UPROPERTY` is Blueprint-editable, Blueprint-readable with asset-assigned defaults, exposed on spawn, instanced, or otherwise likely to differ from the C++ constructor value, inspect the owning Blueprint before treating the C++ value as final behavior.
-- If the owning Blueprint is not already known, search for Blueprint assets derived from the relevant native or Blueprint parent class before finalizing the analysis.
-- Check constructors, `BeginPlay`, `SetupPlayerInputComponent`, tick functions, overlap callbacks, delegates, timers, RPCs, and component initialization.
-- Check relevant `.ini` files for maps, GameMode, input settings, redirects, collision channels, plugin settings, and project defaults.
-- Preserve Unreal terminology precisely: package path, object path, generated class, CDO, component, graph, pin, node, mapping context, action, and asset registry data.
-
-## Derived Blueprint Discovery
-
-Use this step when you know a C++ or Blueprint parent class but do not know which Blueprint assets inherit from it. The helper uses Unreal Asset Registry derived-class data, so indirect inheritance through native C++ classes and Blueprint generated classes is included unless `--direct-only` is specified. For example, searching `/Script/Engine.Actor` can return Blueprints whose immediate parent is a project C++ class that ultimately derives from `AActor`.
-
-Run the helper with the Bash tool. Set the Bash tool `workdir` to the directory that contains this `SKILL.md` unless you use an absolute script path:
-
-```shell
-py -3 "scripts\find_derived_blueprint_assets.py" --class-path "/Script/ThirdPerson.ThirdPersonCharacter" --no-output-file
-```
-
-Supported options:
-
-- `--class-path <path>`: parent class path, usually `/Script/<Module>.<ClassName>` for native C++ classes or a generated class path for Blueprint classes.
-- `--search-paths <paths>`: content roots to scan, default is `/Game`.
-- `--direct-only`: include only Blueprints whose immediate parent class is the target class.
-- `--no-output-file`: return JSON in command output for immediate context.
-- `--output-json <path>`: save JSON to a specific path.
-- `--timeout-seconds <seconds>`: remote execution node discovery timeout.
-- `--engine-path <path>`: explicit Unreal Engine root. If omitted, the helper resolves the engine from the project's `EngineAssociation`, registry entries, or `CODEX_UNREAL_ENGINE_PATH`.
-
-The helper requires an editor instance with Python Remote Execution available. If no remote node is found, report that Blueprint discovery could not be performed; do not guess that no derived Blueprints exist.
-
-Run derived Blueprint discovery commands sequentially. Do not run multiple `find_derived_blueprint_assets.py` instances in parallel, and do not parallelize them with other Unreal Remote Execution commands, because the editor command socket can reject or reset concurrent connections.
-
-Interpret the returned JSON fields:
-
-- `assets[].path`: package path to pass to `scripts/read_asset_json.py`.
-- `assets[].object_path`: full Blueprint asset object path.
-- `assets[].parent_class`: immediate parent class.
-- `assets[].generated_class`: generated class for runtime inheritance checks.
-- `assets[].is_direct_child`: whether the Blueprint directly inherits from the searched class.
-
-If many assets are returned, prioritize ones referenced by maps, config, GameMode defaults, input/animation/widget properties, nearby feature folders, or naming patterns. Then read the selected assets with `scripts/read_asset_json.py`.
-
-## Asset Path Normalization
-
-Accept common Unreal asset path forms and convert them to a long package path or object path as needed:
-
-```text
-/Game/<FolderPath>/<AssetName>
-/Game/<FolderPath>/<AssetName>.<AssetName>
-Content/<FolderPath>/<AssetName>.uasset
-<AssetName> when the location is obvious from search results
-```
-
-If the path is ambiguous, locate it with file search, usually by searching `Content/**/*.uasset` for the asset name.
-
-## Asset JSON Helper
-
-Use `scripts/read_asset_json.py` only when asset internals are needed for the analysis.
-
-Run the helper with the Bash tool. Set the Bash tool `workdir` to the directory that contains this `SKILL.md` unless you use an absolute script path:
-
-```shell
-py -3 "scripts\read_asset_json.py" --asset-path "/Game/<FolderPath>/<AssetName>" --no-output-file
-```
-
-Supported options:
-
-- `--asset-path <path>`: Unreal package path, object path, or recognizable asset file path.
-- `--include-node-properties`: include detailed Blueprint node properties when needed.
-- `--no-output-file`: return JSON in command output for immediate context.
-- `--output-json <path>`: save JSON to a specific output path.
-- `--timeout-seconds <seconds>`: remote execution node discovery timeout.
-- `--engine-path <path>`: explicit Unreal Engine root. If omitted, the helper resolves the engine from the project's `EngineAssociation`, registry entries, or `CODEX_UNREAL_ENGINE_PATH`.
-
-Examples:
-
-```shell
-py -3 "scripts\read_asset_json.py" --asset-path "/Game/<FolderPath>/<AssetName>" --no-output-file
-py -3 "scripts\read_asset_json.py" --asset-path "/Game/<FolderPath>/<AssetName>" --include-node-properties --no-output-file
-py -3 "scripts\read_asset_json.py" --asset-path "/Game/<FolderPath>/<AssetName>" --output-json "Saved/AssetToJson/<AssetName>.json"
-```
-
-If multiple assets must be inspected, export and read them one at a time.
-
-## Blueprint Interpretation
-
-For Blueprint visual scripts, interpret these JSON sections when present:
-
-- `asset`: parent class, generated class, object path
-- `blueprint`: type and compile status
-- `graphs`: graph name/type, nodes, pins, and links
-- `variables`: Blueprint-declared variables and default text values
-- `components`: Blueprint SCS component tree
-
-Build execution flows from linked exec pins first, then data pins.
-
-- Identify entry nodes: events, function entries, construction script entries, timeline updates, delegate events.
-- Follow output exec pins to call nodes, branch nodes, macro nodes, timeline nodes, and latent nodes.
-- Map important data connections: event parameters, variable gets/sets, function inputs, default objects, and default scalar values.
-- Ignore comment nodes except when they clarify intent.
-
-If asset data is missing, stale, inaccessible, or only partially exported, say so explicitly and report what was still observable.
-
-## Response Style
-
-- Answer in Korean unless the user asks otherwise.
-- Start with the main gameplay conclusion when the task is analysis-oriented.
-- Mention the evidence used: C++ files, config files, asset paths, exported JSON, or cached JSON.
-- Include exact class names, function names, asset paths, and key defaults when they matter.
-- For Blueprint visual scripts, explain runtime behavior rather than only listing nodes.
-- State limitations clearly, including inaccessible assets, unavailable exports, stale cached data, or inferred behavior.
+If delegation is unavailable or not permitted, perform the same workflow directly.
 
 ## Safety
 
-- Do not modify assets while inspecting them.
-- Do not save the project or resave packages unless the user explicitly asks.
-- Do not run destructive editor commands.
-- Keep generated JSON under `Saved/` unless the user asks for another output path.
+- Do not call setters, creation tools, compile tools, save tools, `write_file`, or mutating editor actions.
+- Do not edit `.uasset` bytes or treat them as source text.
+- Do not save or resave packages.
+- Do not use `ProgrammaticToolset` merely to bypass focused read-only tools.
+- Use exact `/Game/...` package paths and keep searches narrow.
+
+## Response
+
+Answer in the user's language. Lead with the gameplay conclusion. Include relevant files/classes, asset paths, resolved MCP toolsets, and decisive observations. End with explicit limits, especially unavailable assets, stale editor state, inferred behavior, or runtime behavior that was not tested.

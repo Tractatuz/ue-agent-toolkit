@@ -17,6 +17,7 @@ public class UnrealMCPToolsets : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
 			"AnimGraph",
+			"EnhancedInput",
 			"Kismet",
 			"UnrealEd"
 		});

@@ -1,7 +1,7 @@
 {
   "name": "ue-agent-toolkit",
-  "version": "0.1.0+codex.20260808003207",
-  "description": "Unreal Engine workflows for specification, planning, analysis, implementation, validation, and iterative delivery.",
+  "version": "0.1.0+codex.20260812074938",
+  "description": "Unreal Engine workflows that analyze, edit, test, and collect evidence through Unreal MCP.",
   "author": {
     "name": "Kyungnam Kim",
     "url": "https://github.com/Tractatuz"
@@ -16,16 +16,18 @@
     "automation"
   ],
   "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "UE Agent Toolkit",
     "shortDescription": "Build and validate Unreal Engine projects with Codex.",
-    "longDescription": "Reusable Unreal Engine workflows for feature specifications, implementation plans, C++ and asset analysis, focused implementation, testing, code review, and end-to-end iteration.",
+    "longDescription": "Reusable Unreal Engine workflows for specifications, planning, C++ and asset analysis, focused implementation, testing, evidence capture, and end-to-end iteration through the local Unreal MCP server.",
     "developerName": "Kyungnam Kim",
     "category": "Productivity",
     "capabilities": [
       "Analysis",
       "Write",
-      "Testing"
+      "Testing",
+      "Unreal MCP"
     ],
     "defaultPrompt": [
       "Analyze how this Unreal Engine feature works.",
