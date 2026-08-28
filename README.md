@@ -51,6 +51,13 @@ Use /ue-agent-toolkit:install-ue-plugins to install the bundled Unreal Engine pl
 
 7. Start a new Claude Code session so the plugin MCP connection and bundled subagents are loaded. The agents discover live schemas with `list_toolsets` and `describe_toolset` before calling tools.
 
+### Updating The Bundled Unreal Plugin
+
+Pull the marketplace clone to refresh the bundled payload. A SessionStart hook then compares the payload
+`.uplugin` version with the copy installed in the project and reports drift; it never edits project files.
+Because the plugin is source-only, applying an update requires re-running the install skill with approval,
+then rebuilding the editor target and restarting the editor.
+
 ## Why ue-agent-toolkit?
 
 Unreal Engine projects are hard to work with using general AI agent workflows because of **large engine codebase**, **long compile time**, and **dependency on non-text asset files**.

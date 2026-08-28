@@ -19,9 +19,25 @@ py -3 "<skill-directory>\scripts\install_plugins.py" --project-root "<unreal-pro
 
 Use another available Python launcher when `py -3` is unavailable.
 
-4. **Handle conflicts.** Missing or identical destinations are safe. Ignore generated `Binaries/`, `Intermediate/`, `Saved/`, `DerivedDataCache/`, and `.vs/` directories during comparison. Show every conflict and stop for explicit replacement approval; never assume `--force`.
+4. **Handle conflicts.** Missing or identical destinations are safe. Ignore generated `Binaries/`, `Intermediate/`, `Saved/`, `DerivedDataCache/`, and `.vs/` directories during comparison. Show every conflict or downgrade and stop for explicit replacement approval; never assume `--force`.
 5. **Install.** Run the same command without `--dry-run`. Add `--force` only after approval. Approved replacement creates a backup under `<project>/.ue-agent-toolkit/backups/unreal-plugins/` before synchronizing source files.
 6. **Verify files.** Confirm `<project>/Plugins/UnrealMCPToolsets/UnrealMCPToolsets.uplugin` exists and report installed, unchanged, replaced, and backup paths separately.
+
+## Updating
+
+The plugin's SessionStart hook runs `scripts/install_plugins.py --check` when a session starts in an
+Unreal project root, and reports `.uplugin` version drift between the bundled payload and the installed
+copy. It only reports; it never changes files. Pulling the marketplace clone refreshes the payload, so
+that advisory is what makes a refreshed payload visible.
+
+- Bundled newer than installed: offer the install flow above, and state that the source-only update needs
+  an editor target rebuild and an editor restart. Have the editor closed before replacing files.
+- Installed newer than bundled: the installer reports `DOWNGRADE` and refuses without `--force`. Never
+  force that without saying the project copy is being replaced with an older one.
+- The destination usually lives under the project's version control. Check out or unlock those files first
+  when the repository keeps them read-only.
+
+Run `py -3 scripts/test_install_plugins.py` after changing the installer.
 
 ## Unreal MCP Setup
 

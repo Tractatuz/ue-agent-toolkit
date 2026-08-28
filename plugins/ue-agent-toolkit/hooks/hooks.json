@@ -1,0 +1,15 @@
+{
+  "description": "SessionStart advisory that compares the bundled Unreal plugin payload version with the copy installed in the current Unreal project.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "py -3 \"${CLAUDE_PLUGIN_ROOT}/skills/install-ue-plugins/scripts/install_plugins.py\" --check || python3 \"${CLAUDE_PLUGIN_ROOT}/skills/install-ue-plugins/scripts/install_plugins.py\" --check"
+          }
+        ]
+      }
+    ]
+  }
+}

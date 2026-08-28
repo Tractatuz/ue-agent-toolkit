@@ -76,3 +76,6 @@ DerivedDataCache/*
 
 # Cache files
 .cache/*
+# Python bytecode from the toolkit helper scripts
+__pycache__/
+*.pyc

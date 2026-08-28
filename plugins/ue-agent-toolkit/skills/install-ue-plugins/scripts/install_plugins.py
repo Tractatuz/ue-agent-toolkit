@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import os
 import shutil
 import sys
@@ -47,6 +48,14 @@ def parse_args() -> argparse.Namespace:
         help="Unreal project directory containing a .uproject file (default: current directory).",
     )
     parser.add_argument(
+        "--check",
+        action="store_true",
+        help=(
+            "Report version drift between the bundled payload and the installed plugin, then exit. "
+            "Used by the SessionStart hook; never installs, replaces, or backs up anything."
+        ),
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Preview changes without installing, replacing, or backing up files.",
@@ -83,6 +92,21 @@ def ensure_within_project(project_root: Path, path: Path, label: str) -> None:
     path_text = os.path.normcase(str(path.resolve()))
     if os.path.commonpath((project_text, path_text)) != project_text:
         raise ValueError(f"{label} escapes the project root: {path}")
+
+
+def descriptor_versions(descriptor: Path) -> tuple[int, str]:
+    """Read (Version, VersionName) from a .uplugin descriptor, tolerating unreadable files."""
+    try:
+        data = json.loads(descriptor.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError):
+        return (0, "unknown")
+
+    version = data.get("Version")
+    version_name = data.get("VersionName")
+    return (
+        version if isinstance(version, int) else 0,
+        str(version_name) if version_name else "unknown",
+    )
 
 
 def validate_plugin_sources(payload_root: Path) -> list[tuple[str, Path]]:
@@ -154,7 +178,13 @@ def classify(source: Path, destination: Path, force: bool) -> str:
     ensure_no_symlinks(destination)
     if inventory(source) == inventory(destination):
         return "unchanged"
-    return "replace" if force else "conflict"
+    if force:
+        return "replace"
+
+    descriptor_name = f"{source.name}.uplugin"
+    payload_version, _ = descriptor_versions(source / descriptor_name)
+    installed_version, _ = descriptor_versions(destination / descriptor_name)
+    return "downgrade" if installed_version > payload_version else "conflict"
 
 
 def backup_root(project_root: Path) -> Path:
@@ -238,8 +268,77 @@ def install_plugin(
     return backup_path
 
 
+def run_check() -> int:
+    """Report payload/installed version drift as SessionStart context, and stay silent otherwise.
+
+    Detection only. A source-only plugin update needs an editor target rebuild, and the
+    destination usually lives under the team's version control, so applying it stays behind
+    the skill's explicit-approval path.
+    """
+    # Same rule as validate_project_root: the session must start in the project root.
+    project_root = Path.cwd().resolve()
+    if not any(project_root.glob("*.uproject")):
+        return 0
+
+    payload_root = skill_root() / "assets" / "Plugins"
+    notes: list[str] = []
+    for entry in sorted(payload_root.iterdir(), key=lambda item: item.name.casefold()):
+        if not entry.is_dir() or entry.name.startswith("."):
+            continue
+
+        payload_version, payload_name = descriptor_versions(entry / f"{entry.name}.uplugin")
+        installed_descriptor = (
+            project_root / "Plugins" / entry.name / f"{entry.name}.uplugin"
+        )
+        if not installed_descriptor.is_file():
+            notes.append(
+                f"{entry.name} {payload_name} is bundled with the toolkit but is not installed "
+                f"in {project_root}."
+            )
+            continue
+
+        installed_version, installed_name = descriptor_versions(installed_descriptor)
+        if installed_version < payload_version:
+            notes.append(
+                f"{entry.name} is installed at {installed_name} but the toolkit now bundles "
+                f"{payload_name}."
+            )
+        elif installed_version > payload_version:
+            notes.append(
+                f"{entry.name} is installed at {installed_name}, which is newer than the bundled "
+                f"{payload_name}. Do not overwrite it."
+            )
+
+    if not notes:
+        return 0
+
+    notes.append(
+        "Offer the install-ue-plugins skill to sync it. State that a source-only change needs an "
+        "editor target rebuild and an editor restart, and that the destination may be under version "
+        "control. Do not install, replace, or rebuild without explicit approval."
+    )
+    print(
+        json.dumps(
+            {
+                "hookSpecificOutput": {
+                    "hookEventName": "SessionStart",
+                    "additionalContext": chr(10).join(notes),
+                }
+            }
+        )
+    )
+    return 0
+
+
 def main() -> int:
     args = parse_args()
+
+    if args.check:
+        try:
+            return run_check()
+        except Exception:
+            # A session-start advisory must never break the session.
+            return 0
 
     try:
         project_root = validate_project_root(args.project_root)
@@ -262,19 +361,25 @@ def main() -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
-    conflicts = [action.name for action in actions if action.action == "conflict"]
+    blocked = [action for action in actions if action.action in {"conflict", "downgrade"}]
     for action in actions:
         if args.dry_run and action.action in {"install", "replace"}:
             print(f"WOULD {action.action.upper()}: {action.name} -> {action.destination}")
-        elif action.action in {"unchanged", "conflict"}:
+        elif action.action in {"unchanged", "conflict", "downgrade"}:
             print(f"{action.action.upper()}: {action.name} -> {action.destination}")
 
-    if conflicts:
+    if blocked:
         print(
             "ERROR: Conflicting Unreal plugins were not changed. Re-run with --force only "
-            "after explicit approval: " + ", ".join(conflicts),
+            "after explicit approval: " + ", ".join(action.name for action in blocked),
             file=sys.stderr,
         )
+        if any(action.action == "downgrade" for action in blocked):
+            print(
+                "WARNING: A blocked plugin reports a newer installed version than the bundled "
+                "payload. Using --force would downgrade it.",
+                file=sys.stderr,
+            )
         return 2
 
     if args.dry_run:
